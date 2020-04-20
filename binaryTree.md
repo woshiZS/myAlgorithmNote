@@ -7,7 +7,7 @@ typora-root-url: ./
 
 ### Introduction
 
-![slamdunk](/C:/Users/刘韧韬/slamdunk.bmp)
+![slamdunk](/image/slamdunk.bmp)
 
 Tree,one type of data structure which is often used,is commonly applied to simulate data set with Tree-like characters.
 
@@ -15,7 +15,7 @@ We can also regard it as directed acyclic graph which has N nodes and N-1 sides.
 
 ### 1.Traverse
 
-####preOrder Traverse
+#### preOrder Traverse
 
 root   ==>  left child  ==> right child
 
@@ -58,7 +58,7 @@ public:
 };
 ```
 
-####InOrder Traverse
+#### InOrder Traverse
 
 left child ==> root ==> right child
 
@@ -104,7 +104,7 @@ public:
 };
 ```
 
-####postOrder Traverse
+#### postOrder Traverse
 
 left child ==> right child ==>root
 
@@ -162,7 +162,7 @@ public:
 };
 ```
 
-####levelOrder Traversal
+#### levelOrder Traversal
 
 Use BFS and queue for implementation.
 

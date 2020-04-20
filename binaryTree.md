@@ -11,11 +11,11 @@ typora-root-url: ./
 
 Tree,one type of data structure which is often used,is commonly applied to simulate data set with Tree-like characters.
 
-We can also regard it as directed acyclic graph which has N nodes and N-1 sides.More specifically,for any code in binary tree,it mostly has two off-spring nodes.
+We can also regard it as directed acyclic graph which has N nodes and N-1 sides.More specifically,for any node in binary tree,it mostly has two off-spring nodes.
 
 ### 1.Traverse
 
-* preOrder Traverse
+####preOrder Traverse
 
 root   ==>  left child  ==> right child
 
@@ -58,7 +58,7 @@ public:
 };
 ```
 
-* InOrder Traverse
+####InOrder Traverse
 
 left child ==> root ==> right child
 
@@ -104,7 +104,7 @@ public:
 };
 ```
 
-* postOrder Traverse
+####postOrder Traverse
 
 left child ==> right child ==>root
 
@@ -162,7 +162,7 @@ public:
 };
 ```
 
-* levelOrder Traversal
+####levelOrder Traversal
 
 Use BFS and queue for implementation.
 
@@ -191,3 +191,70 @@ public:
 };
 ```
 
+### 2.Use recursion to solve Tree-related problem
+
+As is known tous all,binary tree is one kind of recursively defined structure.Thus, a majority of tree-related problems can be solved by recursion,Usually,there is two patterns:top-down mode and bottom-up mode.
+
+#### top-down mode
+
+Like preOrder Traversal,the principle is below:
+
+```cpp
+1. return specific value for null node
+2. update the answer if needed                      // anwer <-- params
+3. left_ans = top_down(root.left, left_params)      // left_params <-- root.val, params
+4. right_ans = top_down(root.right, right_params)   // right_params <-- root.val, params
+5. return the answer if needed                      // answer <-- left_ans, right_ans
+```
+
+If we need to calculate the maxdeepth of a tree,we can code like this:
+
+```c++
+int answer;		       // don't forget to initialize answer before call maximum_depth
+void maximum_depth(TreeNode* root, int depth) {
+    if (!root) {
+        return;
+    }
+    if (!root->left && !root->right) {
+        answer = max(answer, depth);
+    }
+    maximum_depth(root->left, depth + 1);
+    maximum_depth(root->right, depth + 1);
+}
+/*
+In this program,we update the max value when it traverses to a leaf node(and depth must be greater than max),we can also set depth starting with 0 and update value when curr node is nullptr. 
+*/
+```
+
+#### bottom-up mode
+
+Personally,I think this mode is easier to understand an use,Let's use the same example:caculate depth.
+
+```cpp
+1. return 0 if root is null                 // return 0 for null node
+2. left_depth = maximum_depth(root.left)
+3. right_depth = maximum_depth(root.right)
+4. return max(left_depth, right_depth) + 1  // return depth of the subtree rooted at root
+```
+
+And implementation
+
+```c++
+int maximum_depth(TreeNode* root) {
+	if (!root) {
+		return 0;                                 // return 0 for null node
+	}
+	int left_depth = maximum_depth(root->left);
+	int right_depth = maximum_depth(root->right);
+	return max(left_depth, right_depth) + 1;	  // return depth of the subtree rooted at root
+}
+```
+
+#### summary
+
+**In my perspective,I think the most important thing is to comfirm two things:**
+
+* what is the relation between the current anwser and the next anwser?
+* when should we stop iteration?
+
+think differently and understand abstract theory when we are writing OJ. 

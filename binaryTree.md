@@ -258,3 +258,48 @@ int maximum_depth(TreeNode* root) {
 * when should we stop iteration?
 
 think differently and understand abstract theory when we are writing OJ. 
+
+###  Exercise
+
+#### max depth
+
+```cpp
+class Solution {
+public:
+    int ans;
+    void travel(TreeNode* root,int depth){
+        if(!root){
+            ans=max(depth,ans);
+            return;
+        }
+        travel(root->left,depth+1);
+        travel(root->right,depth+1);
+    }
+    int maxDepth(TreeNode* root) {
+        ans=0;
+        travel(root,0);
+        return ans;
+    }
+};
+```
+
+#### symmetry binary tree
+
+```c++
+class Solution {
+public:
+    bool theSame(TreeNode* left,TreeNode* right){//judge two 
+        if(left==NULL&&right==NULL)return true;
+        else if(left==NULL||right==NULL)return false;
+        else if(left->val!=right->val)return false;
+        else{
+            return theSame(left->left,right->right)&&theSame(left->right,right->left);
+        }
+    }
+    bool isSymmetric(TreeNode* root) {
+        if(!root)return true;
+        return theSame(root->left,root->right);
+    }
+};
+```
+

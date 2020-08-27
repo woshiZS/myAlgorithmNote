@@ -1,9 +1,4 @@
----
-typora-copy-images-to: image
-typora-root-url: ./
----
 
-[TOC]
 
 ### Introduction
 

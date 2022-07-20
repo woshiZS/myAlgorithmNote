@@ -60,7 +60,191 @@ public:
 };
 ```
 
+### 双向BFS && 一些图问题的trick
 
+* [leetcode 787 k站中转最便宜的航班](https://leetcode.cn/problems/cheapest-flights-within-k-stops/)
+
+算是一个图的问题，使用bell ford算法的变种，我们知道bell ford就是不断遍历每条边，然后去比对到dst的距离经过这条边的距离是否可以使原来的距离变小，如果经过一轮遍历不能缩短任何边，那么就说明已经求出了最短路径。
+
+**本题的关键在于最多中转k次在这个算法中如何去表示，实例中如果像原bell ford算法那样去遍历一遍所有边，一个点可能被松弛多次，重点在于保存每次遍历边之前的距离数组，我们新距离的比对应该用遍历前的状态去比而非实际更新的距离数组，因为有可能更新的点在这轮遍历前就更新过了。**
+
+```cpp'
+class Solution {
+public:
+    int findCheapestPrice(int n, vector<vector<int>>& flights, int src, int dst, int k) {
+        // 以src为出发点，加上一个最多松弛k + 1次的限制
+        long dist[n];
+        for(int i = 0; i < n; ++i){
+            dist[i] = INT_MAX;
+        }
+        dist[src] = 0;
+        int bound = k + 1;
+        for(int i = 0; i < bound; ++i){
+            bool check = false;
+            long temp[n];
+            for(int j = 0; j < n; ++j)temp[j] = dist[j];
+            for(auto& edge : flights){
+                int start = edge[0], end = edge[1], weight = edge[2];
+                if(dist[end] > temp[start] + weight){
+                    dist[end] = temp[start] + weight;
+                    check = true;
+                }
+            }
+            if(!check)break;
+        }
+        return dist[dst] == INT_MAX ? -1 : dist[dst];
+    }
+};
+```
+
+* [leetcode 127单词接龙](https://leetcode.cn/problems/word-ladder/)
+
+这道题其实思路也比较直接，就是BFS，但是有几个小细节可以减小时间复杂度
+
+1. 首先就是将每个单词都分配一个id，用一个map来记录string到int的映射关系，比直接用string做key稍微好一点。
+2. 如何处理单词距离为1的单词，如果做一个二重循环检测两个单词是否相差一个字母，需要O(N^2*C)的时间复杂度，如果额外添加一个中间状态，将每个单词添加一个中间节点，这些中间节点依次将每个字母修改为\*, 那么与之相邻的单词势必也会连接这个中间节点，所以只需要O(NC)的时间复杂度。
+3. 采用dist数组来更新begin到各个点的距离，这样就不用每次算层次遍历时候队列的长度了。
+4. 另外就是双向BFS，大致就是begin和end各有一个dist数组，如果每次对方层次遍历时队列pop出来的值，和对方的起点是连通的，说明双向搜索相遇了。
+
+```cpp
+class Solution {
+public:
+    unordered_map<string, int> wordId;
+    vector<vector<int>> edge;
+    int nodeNum = 0;
+
+    void addWord(string& word) {
+        if (!wordId.count(word)) {
+            wordId[word] = nodeNum++;
+            edge.emplace_back();
+        }
+    }
+
+    void addEdge(string& word) {
+        addWord(word);
+        int id1 = wordId[word];
+        for (char& it : word) {
+            char tmp = it;
+            it = '*';
+            addWord(word);
+            int id2 = wordId[word];
+            edge[id1].push_back(id2);
+            edge[id2].push_back(id1);
+            it = tmp;
+        }
+    }
+
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        for (string& word : wordList) {
+            addEdge(word);
+        }
+        addEdge(beginWord);
+        if (!wordId.count(endWord)) {
+            return 0;
+        }
+
+        vector<int> disBegin(nodeNum, INT_MAX);
+        int beginId = wordId[beginWord];
+        disBegin[beginId] = 0;
+        queue<int> queBegin;
+        queBegin.push(beginId);
+
+        vector<int> disEnd(nodeNum, INT_MAX);
+        int endId = wordId[endWord];
+        disEnd[endId] = 0;
+        queue<int> queEnd;
+        queEnd.push(endId);
+
+        while (!queBegin.empty() && !queEnd.empty()) {
+            int queBeginSize = queBegin.size();
+            for (int i = 0; i < queBeginSize; ++i) {
+                int nodeBegin = queBegin.front();
+                queBegin.pop();
+                if (disEnd[nodeBegin] != INT_MAX) {
+                    return (disBegin[nodeBegin] + disEnd[nodeBegin]) / 2 + 1;
+                }
+                for (int& it : edge[nodeBegin]) {
+                    if (disBegin[it] == INT_MAX) {
+                        disBegin[it] = disBegin[nodeBegin] + 1;
+                        queBegin.push(it);
+                    }
+                }
+            }
+
+            int queEndSize = queEnd.size();
+            for (int i = 0; i < queEndSize; ++i) {
+                int nodeEnd = queEnd.front();
+                queEnd.pop();
+                if (disBegin[nodeEnd] != INT_MAX) {
+                    return (disBegin[nodeEnd] + disEnd[nodeEnd]) / 2 + 1;
+                }
+                for (int& it : edge[nodeEnd]) {
+                    if (disEnd[it] == INT_MAX) {
+                        disEnd[it] = disEnd[nodeEnd] + 1;
+                        queEnd.push(it);
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+};
+```
+
+* [leetcode815 公交路线](https://leetcode.cn/problems/bus-routes/)
+
+这道题自己做的大致思路和官方题解差不多，但是可能做的时候不够快吧。有两个细节需要注意一下：
+
+1. 一个是建图的时候，我还是很笨地对每个公交栈经过的路线做二重循环，但是其实可以拿一个哈希表记录每个节点存有公交线路，如果遍历另外一个线路也有之前出现过的点，那么这个点有的线路都和这一轮的线路要连接。
+2. 还是dist数组的建立可以优化BFS的写法，让最后的代码写地不那么麻烦。
+
+```cpp
+class Solution {
+public:
+    int numBusesToDestination(vector<vector<int>>& routes, int source, int target) {
+        if (source == target) {
+            return 0;
+        }
+
+        int n = routes.size();
+        vector<vector<int>> edge(n, vector<int>(n));
+        unordered_map<int, vector<int>> rec;
+        for (int i = 0; i < n; i++) {
+            for (int site : routes[i]) {
+                for (int j : rec[site]) {
+                    edge[i][j] = edge[j][i] = true;
+                }
+                rec[site].push_back(i);
+            }
+        }
+
+        vector<int> dis(n, -1);
+        queue<int> que;
+        for (int bus : rec[source]) {
+            dis[bus] = 1;
+            que.push(bus);
+        }
+        while (!que.empty()) {
+            int x = que.front();
+            que.pop();
+            for (int y = 0; y < n; y++) {
+                if (edge[x][y] && dis[y] == -1) {
+                    dis[y] = dis[x] + 1;
+                    que.push(y);
+                }
+            }
+        }
+
+        int ret = INT_MAX;
+        for (int bus : rec[target]) {
+            if (dis[bus] != -1) {
+                ret = min(ret, dis[bus]);
+            }
+        }
+        return ret == INT_MAX ? -1 : ret;
+    }
+};
+```
 
 ## Eulerain Path
 

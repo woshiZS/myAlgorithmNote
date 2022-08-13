@@ -293,3 +293,70 @@ public:
     }
 };
 ```
+
+### 二分图匹配
+
+>  写这个的原因是因为上周微软笔试T3，涉及到了这个问题，所以刚好学习一下
+
+* 什么是二分图？简而言之，二分图的所有顶点可以分为两个集合，每个集合内部的点之间没有点连接，图的所有边的顶点都分属于两个集合。
+
+* 关于二分图的判定：使用染色法，先将一个点染成一个颜色，然后将他相邻的点染成另一个颜色，如此往复，如果找到一个相邻点已经染色并且该点颜色和当前点颜色相同，那么则不是二分图，否则是二分图。具体做法是bfs，然后没染色的染色，已经染色的检查是否不同颜色。
+
+* Ford-Fulkerson Algorithm for Maximum Flow Problem。二分图匹配可以转化为最大流问题。其中比较出名的Ford-Fulkerson算法，本质思想是维护一个剩余权重图，具体的算法实现可以参考[这里](https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/)
+
+* 然后将二分图转化为最大流问题，就手动添加一个source和一个sink，分别连接两个集合所有的点。然后每个边的权重为1。最后最大流的数量就等于匹配的个数。具体实现参考[这里](https://www.geeksforgeeks.org/maximum-bipartite-matching/)
+* 匈牙利算法，专门用于解决匹配问题的算法。具体思路是如果有匹配项并且没被其他人占有，那就先匹配，如果被其他人占用了，那么就让那个人尝试换一个匹配，如果可以，那么匹配数量加一，如果不行这个人无法添加新的匹配，进入下一个遍历。
+
+对于微软那道题的实现代码
+
+```c++
+#define N 1000
+int slot[N]; // 每个slot对应的人标号
+bool vis[N]; // 标记每个slot是否被访问过。
+int g[N][N];
+int S;
+
+
+bool dfs(int x){
+    for(int i = 1; i <= S; ++i){
+        if(!vis[i] && g[x][i]){
+            vis[i] = true;
+            if(slot[i] == 0 || dfs(slot[i])){
+                slot[i] = x;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool canMatch(vector<int>& a, vector<int>& b, int s){
+    // 图，行为人数
+    int n = a.size();
+    if(n > s)return false;
+    S = s;
+    memset(g, 0, sizeof(g));
+    for(int i = 1; i <= n; ++i){
+        g[i][a[i - 1]] = g[i][b[i - 1]] = 1;
+    }
+    memset(slot, 0, sizeof(slot));
+    
+    // finish building a graph.
+    int ans = 0;
+    cout << "preprocsss finish" << endl;
+    for(int i = 1; i <= n; ++i){
+        memset(vis, 0, sizeof(vis));
+        if(dfs(i))++ans;
+    }
+    cout << ans << endl;
+    return ans == n;
+}
+
+int main(int argc, char** argv){
+    vector<int> a{1, 2, 1, 6, 8, 7, 8};
+    vector<int> b{2,3,4,7,7,8,7};
+    cout << canMatch(a, b, 10) << endl;
+    return 0;
+}
+```
+
